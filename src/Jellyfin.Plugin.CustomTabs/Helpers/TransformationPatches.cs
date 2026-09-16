@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Jellyfin.Plugin.CustomTabs.Attributes;
 using Jellyfin.Plugin.CustomTabs.Configuration;
 using Jellyfin.Plugin.CustomTabs.Model;
 
@@ -8,9 +7,6 @@ namespace Jellyfin.Plugin.CustomTabs.Helpers
 {
     public static class TransformationPatches
     {
-        private static bool IsJf12() =>
-            (JellyfinVersionAttribute.GetVersion() ?? "").StartsWith("12.");
-
         public static string IndexHtml(PatchRequestPayload payload)
         {
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{typeof(CustomTabsPlugin).Namespace}.Inject.addCustomTabs.js")!;
@@ -47,12 +43,10 @@ namespace Jellyfin.Plugin.CustomTabs.Helpers
                     .Replace("  ", " ")
                     .Replace("'undefined'", "\\'undefined\\'");
 
-                // JF 12 renamed favoritesTab → homeTab and changed data-index to 0
-                string anchorPattern = IsJf12()
-                    ? @"(id=""homeTab"" data-index=""0"">)"
-                    : @"(id=""favoritesTab"" data-index=""1""> <div class=""sections""></div> </div>)";
-
-                buffer = Regex.Replace(buffer, anchorPattern, $"$1{finalReplacement}");
+                // favoritesTab pattern is identical in JF 10.11 and JF 12
+                buffer = Regex.Replace(buffer,
+                    @"(id=""favoritesTab"" data-index=""1""> <div class=""sections""></div> </div>)",
+                    $"$1{finalReplacement}");
             }
 
             return buffer;
