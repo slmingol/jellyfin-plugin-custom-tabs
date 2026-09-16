@@ -9,12 +9,12 @@
         "imageUrl": "https://raw.githubusercontent.com/slmingol/jellyfin-plugin-custom-tabs/v12/src/logo.png",
         "versions": [
             {
-                "version": "0.3.0.0",
-                "changelog": "Custom Tabs 0.3.0.0 for Jellyfin 12. Built from slmingol/jellyfin-plugin-custom-tabs@v12, tracking IAmParadox27 upstream.",
+                "version": "0.3.1.0",
+                "changelog": "Custom Tabs 0.3.1.0 for Jellyfin 12. Built from slmingol/jellyfin-plugin-custom-tabs@v12, tracking IAmParadox27 upstream.",
                 "targetAbi": "12.0.0.0",
-                "sourceUrl": "https://github.com/slmingol/jellyfin-plugin-custom-tabs/releases/download/0.3.0.0-jf12/Release-12.0.0.zip",
-                "checksum": "D167C4BF6984F6CD20F57929E91A0D40",
-                "timestamp": "2026-09-16T00:32:48"
+                "sourceUrl": "https://github.com/slmingol/jellyfin-plugin-custom-tabs/releases/download/0.3.1.0-jf12/Release-12.0.0.zip",
+                "checksum": "2E4579280434CA8A0A677645FA232E2A",
+                "timestamp": "2026-09-16T01:09:10"
             }
         ]
     }
