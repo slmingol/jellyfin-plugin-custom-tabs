@@ -60,7 +60,7 @@ namespace Jellyfin.Plugin.CustomTabs.Services
             {
                 JObject payload = new JObject();
                 payload.Add("id", "8a1c2e3f-4b5d-6e7f-8a9b-0c1d2e3f4a5b");
-                payload.Add("fileNamePattern", isJf12 ? "main\\..*\\.bundle\\.js" : "main\\.bundle\\.js");
+                payload.Add("fileNamePattern", "main\\..*\\.bundle\\.js");
                 payload.Add("callbackAssembly", GetType().Assembly.FullName);
                 payload.Add("callbackClass", typeof(TransformationPatches).FullName);
                 payload.Add("callbackMethod", nameof(TransformationPatches.MainBundle));
