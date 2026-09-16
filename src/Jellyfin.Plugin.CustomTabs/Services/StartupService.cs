@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Runtime.Loader;
-using Jellyfin.Plugin.CustomTabs.Attributes;
 using Jellyfin.Plugin.CustomTabs.Helpers;
 using Jellyfin.Plugin.CustomTabs.JellyfinVersionSpecific;
 using MediaBrowser.Controller;
@@ -33,8 +32,6 @@ namespace Jellyfin.Plugin.CustomTabs.Services
         {
             m_logger.LogInformation($"CustomTabs Startup. Registering file transformations.");
 
-            bool isJf12 = (JellyfinVersionAttribute.GetVersion() ?? "").StartsWith("12.");
-
             List<JObject> payloads = new List<JObject>();
 
             {
@@ -50,8 +47,8 @@ namespace Jellyfin.Plugin.CustomTabs.Services
             {
                 JObject payload = new JObject();
                 payload.Add("id", "403e6374-7433-4137-b24f-2be01a14a90f");
-                // JF 12 ships home-html.chunk.js (no hash segment); 10.11 used home-html.*.chunk.js
-                payload.Add("fileNamePattern", isJf12 ? "home-html\\.chunk\\.js" : "home-html\\..*\\.chunk\\.js");
+                // Both JF 10.11 and 12 use home-html.<hash>.chunk.js
+                payload.Add("fileNamePattern", "home-html\\..*\\.chunk\\.js");
                 payload.Add("callbackAssembly", GetType().Assembly.FullName);
                 payload.Add("callbackClass", typeof(TransformationPatches).FullName);
                 payload.Add("callbackMethod", nameof(TransformationPatches.HomeHtmlChunk));
