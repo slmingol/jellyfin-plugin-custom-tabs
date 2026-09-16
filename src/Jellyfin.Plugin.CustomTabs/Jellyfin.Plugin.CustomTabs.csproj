@@ -58,21 +58,6 @@
         <Compile Remove="JellyfinVersionSpecific/12.0/*.cs" />
     </ItemGroup>
 
-    <Target Name="GenerateAssemblyMetadata_JellyfinVersion" BeforeTargets="BeforeCompile">
-        <ItemGroup>
-            <AssemblyAttribute Include="Jellyfin.Plugin.CustomTabs.Attributes.JellyfinVersionAttribute">
-                <_Parameter1>$(JellyfinVersion)</_Parameter1>
-            </AssemblyAttribute>
-        </ItemGroup>
-        <WriteCodeFragment
-                Language="C#"
-                OutputFile="$(IntermediateOutputPath)AssemblyMetadata.g.cs"
-                AssemblyAttributes="@(AssemblyAttribute)" />
-        <ItemGroup>
-            <Compile Include="$(IntermediateOutputPath)AssemblyMetadata.g.cs" />
-        </ItemGroup>
-    </Target>
-
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\ProgramData\Jellyfin\Server_10_11\plugins\CustomTabs')">
         <Exec Condition="$(JellyfinVersion.StartsWith('12.0'))"  Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_12\plugins\CustomTabs&quot; /y" />
         <Exec Condition="$(JellyfinVersion.StartsWith('10.11'))" Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_10_11\plugins\CustomTabs&quot; /y" />
