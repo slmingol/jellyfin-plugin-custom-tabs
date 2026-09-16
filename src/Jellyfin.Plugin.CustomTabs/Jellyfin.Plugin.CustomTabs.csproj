@@ -1,17 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <JellyfinVersion>10.11.2</JellyfinVersion>
+        <JellyfinVersion>12.0.0</JellyfinVersion>
         <JellyfinNugetVersion Condition="!$(JellyfinVersion.StartsWith('10.11'))">$(JellyfinVersion)</JellyfinNugetVersion>
         <JellyfinNugetVersion Condition="$(JellyfinVersion.StartsWith('10.11'))">$(JellyfinVersion)</JellyfinNugetVersion>
         <JellyfinNugetVersion Condition="$(JellyfinVersion.StartsWith('10.11.1'))">10.11.0</JellyfinNugetVersion>
         <JellyfinNugetVersion Condition="$(JellyfinVersion.StartsWith('10.11.0'))">10.11.0</JellyfinNugetVersion>
+        <JellyfinNugetVersion Condition="$(JellyfinVersion.StartsWith('12.0.0'))">12.0.0</JellyfinNugetVersion>
         <TargetFramework Condition="$(JellyfinVersion.StartsWith('10.11'))">net9.0</TargetFramework>
         <TargetFramework Condition="'$(JellyfinVersion)' == '10.10.7'">net8.0</TargetFramework>
+        <TargetFramework Condition="$(JellyfinVersion.StartsWith('12.'))">net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <Version>0.2.0.0</Version>
+        <Version>0.3.0.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,18 +31,18 @@
       <EmbeddedResource Include="Inject\addCustomTabs.js" />
       <None Remove="Inject\tabTemplate.html" />
       <EmbeddedResource Include="Inject\tabTemplate.html" />
-      
+
       <None Include="..\..\README.md" />
       <None Include="..\logo.png" CopyToOutputDirectory="Always" />
     </ItemGroup>
 
-    <!-- 10.10.7 Specific Code from non 10.10.7 builds -->
+    <!-- 10.10.7 Specific Code -->
     <ItemGroup Condition="'$(JellyfinVersion)' != '10.10.7'">
         <None Include="JellyfinVersionSpecific/10.10.7/*.cs" />
         <Compile Remove="JellyfinVersionSpecific/10.10.7/*.cs" />
     </ItemGroup>
 
-    <!-- Remove 10.11.0 Specific Code from non 10.11.0 builds -->
+    <!-- 10.11.0 Specific Code -->
     <ItemGroup Condition="'$(JellyfinVersion)' != '10.11.0'">
         <None Include="JellyfinVersionSpecific/10.11.0/*.cs" />
         <Compile Remove="JellyfinVersionSpecific/10.11.0/*.cs" />
@@ -49,9 +51,16 @@
         <None Include="JellyfinVersionSpecific/10.11/*.cs" />
         <Compile Remove="JellyfinVersionSpecific/10.11/*.cs" />
     </ItemGroup>
-    
+
+    <!-- 12.0 Specific Code -->
+    <ItemGroup Condition="!$(JellyfinVersion.StartsWith('12.0'))">
+        <None Include="JellyfinVersionSpecific/12.0/*.cs" />
+        <Compile Remove="JellyfinVersionSpecific/12.0/*.cs" />
+    </ItemGroup>
+
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="Exists('C:\ProgramData\Jellyfin\Server_10_11\plugins\CustomTabs')">
+        <Exec Condition="$(JellyfinVersion.StartsWith('12.0'))"  Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_12\plugins\CustomTabs&quot; /y" />
         <Exec Condition="$(JellyfinVersion.StartsWith('10.11'))" Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_10_11\plugins\CustomTabs&quot; /y" />
-        <Exec Condition="'$(JellyfinVersion)' == '10.10.7'" Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_10_10_7\plugins\CustomTabs&quot; /y" />
+        <Exec Condition="'$(JellyfinVersion)' == '10.10.7'"      Command="xcopy $(OutDir) &quot;C:\ProgramData\Jellyfin\Server_10_10_7\plugins\CustomTabs&quot; /y" />
     </Target>
 </Project>

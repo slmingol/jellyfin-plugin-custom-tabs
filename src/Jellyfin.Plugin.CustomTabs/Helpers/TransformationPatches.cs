@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Jellyfin.Plugin.CustomTabs.Configuration;
 using Jellyfin.Plugin.CustomTabs.Model;
@@ -11,9 +11,9 @@ namespace Jellyfin.Plugin.CustomTabs.Helpers
         {
             Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{typeof(CustomTabsPlugin).Namespace}.Inject.addCustomTabs.js")!;
             using TextReader reader = new StreamReader(stream);
-            
+
             string regex = Regex.Replace(payload.Contents!, "(</body>)", $"<script defer>{reader.ReadToEnd()}</script>$1");
-            
+
             return regex;
         }
 
@@ -42,8 +42,11 @@ namespace Jellyfin.Plugin.CustomTabs.Helpers
                     .Replace('\n', ' ')
                     .Replace("  ", " ")
                     .Replace("'undefined'", "\\'undefined\\'");
-                
-                buffer = Regex.Replace(buffer, "(id=\"favoritesTab\" data-index=\"1\"> <div class=\"sections\"></div> </div>)", $"$1{finalReplacement}");
+
+                // favoritesTab pattern is identical in JF 10.11 and JF 12
+                buffer = Regex.Replace(buffer,
+                    @"(id=""favoritesTab"" data-index=""1""> <div class=""sections""></div> </div>)",
+                    $"$1{finalReplacement}");
             }
 
             return buffer;
@@ -53,7 +56,7 @@ namespace Jellyfin.Plugin.CustomTabs.Helpers
         {
             string replacementText =
                 "window.PlaybackManager=this.playbackManager;console.log(\"PlaybackManager is now globally available:\",window.PlaybackManager);";
-            
+
             string regex = Regex.Replace(payload.Contents!, @"(this\.playbackManager=e,)", $"$1{replacementText}");
 
             return regex;
