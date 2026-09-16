@@ -41,6 +41,11 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=${VERSION}-jf12" >> "$GITHUB_OUTPUT"
 
+      - name: Set assembly version
+        run: |
+          sed -i "s/AssemblyVersion(\"[^\"]*\")/AssemblyVersion(\"${{ steps.version.outputs.version }}\")/" \
+            src/Jellyfin.Plugin.CustomTabs/Properties/AssemblyInfo.cs
+
       - name: Build
         run: |
           dotnet publish src/Jellyfin.Plugin.CustomTabs/Jellyfin.Plugin.CustomTabs.csproj \
