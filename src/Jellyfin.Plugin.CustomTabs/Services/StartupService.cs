@@ -1,5 +1,6 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.Loader;
+using Jellyfin.Plugin.CustomTabs.Attributes;
 using Jellyfin.Plugin.CustomTabs.Helpers;
 using Jellyfin.Plugin.CustomTabs.JellyfinVersionSpecific;
 using MediaBrowser.Controller;
@@ -16,9 +17,9 @@ namespace Jellyfin.Plugin.CustomTabs.Services
         public string Name => "Custom Tabs Startup";
 
         public string Key => "Jellyfin.Plugin.CustomTabs.Startup";
-        
+
         public string Description => "Startup Service for Custom Tabs";
-        
+
         public string Category => "Startup Services";
 
         private readonly ILogger<CustomTabsPlugin> m_logger;
@@ -31,7 +32,9 @@ namespace Jellyfin.Plugin.CustomTabs.Services
         public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             m_logger.LogInformation($"CustomTabs Startup. Registering file transformations.");
-            
+
+            bool isJf12 = (JellyfinVersionAttribute.GetVersion() ?? "").StartsWith("12.");
+
             List<JObject> payloads = new List<JObject>();
 
             {
@@ -41,17 +44,30 @@ namespace Jellyfin.Plugin.CustomTabs.Services
                 payload.Add("callbackAssembly", GetType().Assembly.FullName);
                 payload.Add("callbackClass", typeof(TransformationPatches).FullName);
                 payload.Add("callbackMethod", nameof(TransformationPatches.IndexHtml));
-                
+
                 payloads.Add(payload);
             }
             {
                 JObject payload = new JObject();
                 payload.Add("id", "403e6374-7433-4137-b24f-2be01a14a90f");
-                payload.Add("fileNamePattern", "home-html\\..*\\.chunk\\.js");
+                // JF 12 ships home-html.chunk.js (no hash segment); 10.11 used home-html.*.chunk.js
+                payload.Add("fileNamePattern", isJf12 ? "home-html\\.chunk\\.js" : "home-html\\..*\\.chunk\\.js");
                 payload.Add("callbackAssembly", GetType().Assembly.FullName);
                 payload.Add("callbackClass", typeof(TransformationPatches).FullName);
                 payload.Add("callbackMethod", nameof(TransformationPatches.HomeHtmlChunk));
-                
+
+                payloads.Add(payload);
+            }
+
+            // MainBundle patch (exposes PlaybackManager globally) — register for all versions
+            {
+                JObject payload = new JObject();
+                payload.Add("id", "8a1c2e3f-4b5d-6e7f-8a9b-0c1d2e3f4a5b");
+                payload.Add("fileNamePattern", isJf12 ? "main\\..*\\.bundle\\.js" : "main\\.bundle\\.js");
+                payload.Add("callbackAssembly", GetType().Assembly.FullName);
+                payload.Add("callbackClass", typeof(TransformationPatches).FullName);
+                payload.Add("callbackMethod", nameof(TransformationPatches.MainBundle));
+
                 payloads.Add(payload);
             }
 
