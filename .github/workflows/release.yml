@@ -1,0 +1,119 @@
+name: Build & Release (JF 12)
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+.[0-9]+-jf12'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.3.0.0)'
+        required: true
+        default: '0.3.0.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v12
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION%-jf12}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=${VERSION}-jf12" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          dotnet publish src/Jellyfin.Plugin.CustomTabs/Jellyfin.Plugin.CustomTabs.csproj \
+            -c Release \
+            -p:JellyfinVersion=12.0.0 \
+            -p:Version=${{ steps.version.outputs.version }} \
+            -o publish
+
+      - name: Package
+        id: package
+        run: |
+          cd publish
+          zip ../Release-12.0.0.zip Jellyfin.Plugin.CustomTabs.dll logo.png
+          cd ..
+          CHECKSUM=$(md5sum Release-12.0.0.zip | awk '{print toupper($1)}')
+          echo "checksum=$CHECKSUM" >> "$GITHUB_OUTPUT"
+          echo "$CHECKSUM" > Release-12.0.0.zip.md5
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "${{ steps.version.outputs.version }} (Jellyfin 12)"
+          body: |
+            Custom Tabs ${{ steps.version.outputs.version }} built for Jellyfin 12.0.0.
+
+            Built from the `v12` branch of this fork, tracking upstream [IAmParadox27/jellyfin-plugin-custom-tabs](https://github.com/IAmParadox27/jellyfin-plugin-custom-tabs).
+
+            **Install via repo:** Add `https://raw.githubusercontent.com/slmingol/jellyfin-plugin-custom-tabs/v12/manifest.json` to Jellyfin plugin repositories, then install Custom Tabs from Catalog.
+
+            **Install manually:**
+            1. Download `Release-12.0.0.zip`
+            2. Extract into your Jellyfin `plugins/CustomTabs/` directory
+            3. Restart Jellyfin
+          files: |
+            Release-12.0.0.zip
+            Release-12.0.0.zip.md5
+          draft: false
+          prerelease: true
+
+      - name: Update manifest.json
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          CHECKSUM="${{ steps.package.outputs.checksum }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S")
+          SOURCE_URL="https://github.com/slmingol/jellyfin-plugin-custom-tabs/releases/download/${VERSION}-jf12/Release-12.0.0.zip"
+
+          cat > manifest.json << EOF
+          [
+              {
+                  "guid": "fbacd0b6-fd46-4a05-b0a4-2045d6a135b0",
+                  "name": "Custom Tabs",
+                  "overview": null,
+                  "description": "Adds custom tab pages to the Jellyfin home screen",
+                  "owner": "slmingol (fork of IAmParadox27)",
+                  "category": "General",
+                  "imageUrl": "https://raw.githubusercontent.com/slmingol/jellyfin-plugin-custom-tabs/v12/src/logo.png",
+                  "versions": [
+                      {
+                          "version": "${VERSION}",
+                          "changelog": "Custom Tabs ${VERSION} for Jellyfin 12. Built from slmingol/jellyfin-plugin-custom-tabs@v12, tracking IAmParadox27 upstream.",
+                          "targetAbi": "12.0.0.0",
+                          "sourceUrl": "${SOURCE_URL}",
+                          "checksum": "${CHECKSUM}",
+                          "timestamp": "${TIMESTAMP}"
+                      }
+                  ]
+              }
+          ]
+          EOF
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "ci: update manifest.json for ${VERSION}-jf12 [skip ci]"
+          git push origin v12
